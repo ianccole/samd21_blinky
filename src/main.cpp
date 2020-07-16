@@ -1,11 +1,10 @@
 #include <Arduino.h>
-#include "wiring_private.h"
+
 int brightness = 0;    // how bright the LED is
 int fadeAmount = 5;    // how many points to fade the LED by
 
 // the setup routine runs once when you press reset:
 void setup() {
-    pinPeripheral(LED_BUILTIN, PIO_TIMER);
 }
 
 // the loop routine runs over and over again forever:
