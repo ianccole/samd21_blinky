@@ -9,47 +9,8 @@ void setup()
     // put your setup code here, to run once:
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(PIN_GPS_POWER, OUTPUT);
-    digitalWrite(PIN_GPS_POWER, HIGH);    // GPS power OFF
-
-    // digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-    // delay(1000);
-    // digitalWrite(LED_BUILTIN, LOW); // turn the LED off by making the voltage LOW
-}
-
-static bool smartdelay(unsigned long ms)
-{
-    unsigned long start = millis();
-    bool gpsOK = false;
-    do
-    {
-        while (Serial1.available())
-        {
-            char ch;
-            ch = Serial1.read();
-            // SerialUSB.print(ch);
-
-
-            if (gps.encode(ch))
-            {
-                long lat, lon;
-                unsigned long fix_age; // returns +- latitude/longitude in degrees
-                unsigned long date, time;
-                gps.get_position(&lat, &lon, &fix_age);
-                gps.get_datetime(&date, &time, &fix_age);
-                if (fix_age == TinyGPS::GPS_INVALID_AGE)
-                    SerialUSB.println("No fix detected");
-                else if (fix_age > 5000)
-                    SerialUSB.println("Warning: possible stale data!");
-                else
-                {
-                    sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);
-                    SerialUSB.print(buffer);
-                    gpsOK = true;
-                }
-            }
-        }
-    } while (millis() - start < ms);
-    return gpsOK;
+    // digitalWrite(PIN_GPS_POWER, GPS_OFF);    // GPS power OFF
+    digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
 }
 
 static bool checkGPS()
@@ -60,6 +21,7 @@ static bool checkGPS()
     {
         char ch;
         ch = Serial1.read();
+        // SerialUSB.print(ch);
 
         if (gps.encode(ch))
         {
@@ -76,10 +38,15 @@ static void showFix()
     unsigned long date, time;
     gps.get_position(&lat, &lon, &fix_age);
     gps.get_datetime(&date, &time, &fix_age);
+    // SerialUSB.println(fix_age);
     if (fix_age == TinyGPS::GPS_INVALID_AGE)
+    {
         SerialUSB.println("No fix detected");
+    }
     else if (fix_age > 5000)
+    {
         SerialUSB.println("Warning: possible stale data!");
+    }
     else
     {
         sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);
@@ -89,74 +56,59 @@ static void showFix()
 
 void loop()
 {
-    static int gpsFixes = 0;
-    static unsigned long hundreds = 0;
-    static unsigned long previousMillis = 0;
-    static unsigned long interval = 100;
-    static unsigned long led_interval = 100;
-    unsigned long currentMillis = millis();
-    static int ledState = HIGH;
+    static unsigned long start = millis();
+    static unsigned long ledtime=start;
+    static unsigned long gpstime=start;
+    static unsigned long led_interval = 1000;
+    static unsigned int seconds = 0;
+    static bool gotFix = false;
+    static unsigned long ttff = 0;
 
-    if (currentMillis - previousMillis >= interval) 
+    unsigned long now = millis();
+
+    if(checkGPS())
     {
-        previousMillis = currentMillis;
-        hundreds += 1;                          // count hundreds of seconds
-        if(checkGPS())
-        {
-            showFix();
-            // led_interval = 10;
-        }
+        gotFix = true;
+        showFix();
     }
 
-    if(hundreds == 20 )
+    if (now-gpstime > 1000)
     {
-        digitalWrite(PIN_GPS_POWER, LOW); // GPS power ON
+        gpstime = now;
+        seconds +=1;
     }
 
-    if(hundreds % led_interval == 0)
+    if(gotFix && ttff==0)
     {
-        digitalWrite(LED_BUILTIN, ledState); // turn the LED on (HIGH is the voltage level)
-        ledState ^= 1;
-        SerialUSB.println(hundreds);
+        ttff = now - start;
+        SerialUSB.print(ttff);
+        SerialUSB.println(" TTFF");
+        seconds = 0;
+        led_interval = 500;
     }
 
-    // if(hundreds % 100 == 0)
-    // {
-    //     digitalWrite(LED_BUILTIN, ledState); // turn the LED on (HIGH is the voltage level)
-    //     ledState ^= 1;
-    // }
+    if(gotFix && seconds > 10)
+    {
+        gotFix = false;
+        ttff = 0;
+        SerialUSB.println(" gps power off");
+        digitalWrite(PIN_GPS_POWER, GPS_OFF);
+        seconds = 0;
+        led_interval = 1000;
+    }
 
+    if(!gotFix && digitalRead(PIN_GPS_POWER) == GPS_OFF && seconds > 10)
+    {
+        SerialUSB.println(" gps power on");
+        digitalWrite(PIN_GPS_POWER, GPS_ON);
+        start = now;
+        seconds = 0;
+    }
 
-    // if (checkGPS())
-    // {
-    //     interval = 50;
-    //     showFix();
-    // }
-    // else
-    // {
-    //     interval = 1000;
-    // }
-    
- 
-    // digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-    // if (checkGPS(1000))
-    // {
-    //     showFix()
-    // }
- 
- 
-    // gpsFix = smartdelay(1000);                // wait for a second
-    // if (gpsFix)
-    // {
-    //     digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-    //     smartdelay(50);                 // wait for a second
-    //     digitalWrite(LED_BUILTIN, LOW); // turn the LED off by making the voltage LOW
-    // }
+    if (now-ledtime > led_interval)
+    {
+        ledtime = now;
 
-    // put your main code here, to run repeatedly:
-    // digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-    // smartdelay(interval);                // wait for a second
-    // // SerialUSB.println("ready");
-    // digitalWrite(LED_BUILTIN, LOW); // turn the LED off by making the voltage LOW
-    // smartdelay(interval);
+        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED on (HIGH is the voltage level)
+    }
 }
