@@ -53,9 +53,19 @@ static void showFix()
         SerialUSB.print(buffer);
     }
 }
+enum class gps_state
+{
+    gps_on,
+    gps_on_fix,
+    gps_off
+};
+
 
 void loop()
 {
+    static gps_state state = gps_state::gps_on;
+
+
     static unsigned long start = millis();
     static unsigned long ledtime=start;
     static unsigned long gpstime=start;
@@ -78,31 +88,43 @@ void loop()
         seconds +=1;
     }
 
-    if(gotFix && ttff==0)
+    switch(state)
     {
-        ttff = now - start;
-        SerialUSB.print(ttff);
-        SerialUSB.println(" TTFF");
-        seconds = 0;
-        led_interval = 500;
-    }
+        case gps_state::gps_on:
+            if (gotFix)
+            {
+                state = gps_state::gps_on_fix;
+                ttff = now - start;
+                SerialUSB.print(ttff);
+                SerialUSB.println(" TTFF");
+                seconds = 0;
+                led_interval = 500;
+            }
+            break;
 
-    if(gotFix && seconds > 10)
-    {
-        gotFix = false;
-        ttff = 0;
-        SerialUSB.println(" gps power off");
-        digitalWrite(PIN_GPS_POWER, GPS_OFF);
-        seconds = 0;
-        led_interval = 1000;
-    }
+        case gps_state::gps_on_fix:
+            if (seconds > 10)
+            {
+                state = gps_state::gps_off;
+                gotFix = false;
+                ttff = 0;
+                SerialUSB.println(" gps power off");
+                digitalWrite(PIN_GPS_POWER, GPS_OFF);
+                seconds = 0;
+                led_interval = 1000;
+            }
+            break;
 
-    if(!gotFix && digitalRead(PIN_GPS_POWER) == GPS_OFF && seconds > 10)
-    {
-        SerialUSB.println(" gps power on");
-        digitalWrite(PIN_GPS_POWER, GPS_ON);
-        start = now;
-        seconds = 0;
+        case gps_state::gps_off:
+            if (seconds > 10)
+            {
+                state = gps_state::gps_on;
+                SerialUSB.println(" gps power on");
+                digitalWrite(PIN_GPS_POWER, GPS_ON);
+                start = now;
+                seconds = 0;
+            }
+            break;
     }
 
     if (now-ledtime > led_interval)
