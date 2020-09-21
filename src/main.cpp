@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include "TinyGPS.h"
+#include <ArduinoLowPower.h>
+
 TinyGPS gps;
 char buffer[128];
 void setup()
@@ -112,6 +114,7 @@ void loop()
                 digitalWrite(PIN_GPS_POWER, GPS_OFF);
                 seconds = 0;
                 led_interval = 1000;
+                LowPower.sleep(8000);
             }
             break;
 
