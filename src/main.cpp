@@ -1,8 +1,8 @@
 #include <Arduino.h>
-#include "TinyGPS.h"
+// #include "TinyGPS.h"
 #include <ArduinoLowPower.h>
 
-TinyGPS gps;
+// TinyGPS gps;
 char buffer[128];
 void setup()
 {
@@ -15,46 +15,46 @@ void setup()
     digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
 }
 
-static bool checkGPS()
-{
-    bool gpsFix = false;
+// static bool checkGPS()
+// {
+//     bool gpsFix = false;
 
-    while (Serial1.available())
-    {
-        char ch;
-        ch = Serial1.read();
-        // SerialUSB.print(ch);
+//     while (Serial1.available())
+//     {
+//         char ch;
+//         ch = Serial1.read();
+//         // SerialUSB.print(ch);
 
-        if (gps.encode(ch))
-        {
-            gpsFix = true;
-        }
-    }
-    return gpsFix;
-}
+//         if (gps.encode(ch))
+//         {
+//             gpsFix = true;
+//         }
+//     }
+//     return gpsFix;
+// }
 
-static void showFix()
-{
-    long lat, lon;
-    unsigned long fix_age; // returns +- latitude/longitude in degrees
-    unsigned long date, time;
-    gps.get_position(&lat, &lon, &fix_age);
-    gps.get_datetime(&date, &time, &fix_age);
-    // SerialUSB.println(fix_age);
-    if (fix_age == TinyGPS::GPS_INVALID_AGE)
-    {
-        SerialUSB.println("No fix detected");
-    }
-    else if (fix_age > 5000)
-    {
-        SerialUSB.println("Warning: possible stale data!");
-    }
-    else
-    {
-        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);
-        SerialUSB.print(buffer);
-    }
-}
+// static void showFix()
+// {
+//     long lat, lon;
+//     unsigned long fix_age; // returns +- latitude/longitude in degrees
+//     unsigned long date, time;
+//     gps.get_position(&lat, &lon, &fix_age);
+//     gps.get_datetime(&date, &time, &fix_age);
+//     // SerialUSB.println(fix_age);
+//     if (fix_age == TinyGPS::GPS_INVALID_AGE)
+//     {
+//         SerialUSB.println("No fix detected");
+//     }
+//     else if (fix_age > 5000)
+//     {
+//         SerialUSB.println("Warning: possible stale data!");
+//     }
+//     else
+//     {
+//         sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);
+//         SerialUSB.print(buffer);
+//     }
+// }
 enum class gps_state
 {
     gps_on,
@@ -65,7 +65,7 @@ enum class gps_state
 
 void loop()
 {
-    static gps_state state = gps_state::gps_on;
+    static gps_state state = gps_state::gps_on_fix;
 
 
     static unsigned long start = millis();
@@ -78,11 +78,11 @@ void loop()
 
     unsigned long now = millis();
 
-    if(checkGPS())
-    {
-        gotFix = true;
-        showFix();
-    }
+    // if(checkGPS())
+    // {
+    //     gotFix = true;
+    //     showFix();
+    // }
 
     if (now-gpstime > 1000)
     {
@@ -121,7 +121,7 @@ void loop()
         case gps_state::gps_off:
             if (seconds > 10)
             {
-                state = gps_state::gps_on;
+                state = gps_state::gps_on_fix;
                 SerialUSB.println(" gps power on");
                 digitalWrite(PIN_GPS_POWER, GPS_ON);
                 start = now;
