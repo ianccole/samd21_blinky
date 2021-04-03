@@ -42,6 +42,7 @@ void loop()
 
     unsigned long now = millis();
 
+    // count seconds
     if (now-second > 1000)
     {
         second = now;
@@ -54,9 +55,15 @@ void loop()
             if (seconds > 10)
             {
                 state = led_state::led_off;
-                SerialUSB.println(" gps power off");
+                SerialUSB.println("gps power off");
                 digitalWrite(PIN_GPS_POWER, GPS_OFF);
                 seconds = 0;
+
+                SerialUSB.println("radio init");
+                rf95.init();
+
+                SerialUSB.println("radio sleep");
+                rf95.sleep(); // put radio into sleep mode
 
                 digitalWrite(LED_BUILTIN, LOW);
                 LowPower.sleep(8000);
@@ -67,7 +74,7 @@ void loop()
             if (seconds > 10)
             {
                 state = led_state::led_on;
-                SerialUSB.println(" gps power on");
+                SerialUSB.println("gps power on");
                 digitalWrite(PIN_GPS_POWER, GPS_ON);
                 seconds = 0;
                 start = now;
