@@ -24,15 +24,16 @@ void setup()
 }
 
 
-enum class led_state
+enum class test_state
 {
-    led_on,
-    led_off
+    init,
+    active,
+    sleeping
 };
 
 void loop()
 {
-    static led_state state = led_state::led_on;
+    static test_state state = test_state::init;
 
     static unsigned long start = millis();
     static unsigned long ledtime=start;
@@ -51,13 +52,24 @@ void loop()
 
     switch(state)
     {
-        case led_state::led_on:
-            if (seconds > 10)
+        case test_state::init:
+            if (seconds > 2)
             {
-                state = led_state::led_off;
-                SerialUSB.println("gps power off");
-                digitalWrite(PIN_GPS_POWER, GPS_OFF);
+                SerialUSB.println("test_state::init");
+                state = test_state::active; // next state
+
                 seconds = 0;
+            }
+            break;
+
+        case test_state::active:
+            if (seconds > 2)
+            {
+                SerialUSB.println("test_state::active");
+                state = test_state::sleeping; // next state
+
+                // SerialUSB.println("gps power off");
+                // digitalWrite(PIN_GPS_POWER, GPS_OFF);
 
                 SerialUSB.println("radio init");
                 rf95.init();
@@ -65,17 +77,22 @@ void loop()
                 SerialUSB.println("radio sleep");
                 rf95.sleep(); // put radio into sleep mode
 
-                digitalWrite(LED_BUILTIN, LOW);
-                LowPower.sleep(8000);
+                // digitalWrite(LED_BUILTIN, LOW);
+                // LowPower.sleep(8000);
+
+                seconds = 0;
             }
             break;
 
-        case led_state::led_off:
-            if (seconds > 10)
+        case test_state::sleeping:
+            if (seconds > 2)
             {
-                state = led_state::led_on;
-                SerialUSB.println("gps power on");
-                digitalWrite(PIN_GPS_POWER, GPS_ON);
+                SerialUSB.println("test_state::sleeping");
+                state = test_state::active; // next state
+
+                // SerialUSB.println("gps power on");
+                // digitalWrite(PIN_GPS_POWER, GPS_ON);
+
                 seconds = 0;
                 start = now;
             }
