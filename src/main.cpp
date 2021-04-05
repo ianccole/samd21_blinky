@@ -58,27 +58,28 @@ void loop()
                 SerialUSB.println("test_state::init");
                 state = test_state::active; // next state
 
+                SerialUSB.println("radio init");
+                rf95.init();
+
                 seconds = 0;
             }
             break;
 
         case test_state::active:
-            if (seconds > 2)
+            if (seconds > 10)
             {
                 SerialUSB.println("test_state::active");
                 state = test_state::sleeping; // next state
 
-                // SerialUSB.println("gps power off");
-                // digitalWrite(PIN_GPS_POWER, GPS_OFF);
+                SerialUSB.println("gps power off");
+                digitalWrite(PIN_GPS_POWER, GPS_OFF);
 
-                SerialUSB.println("radio init");
-                rf95.init();
 
                 SerialUSB.println("radio sleep");
                 rf95.sleep(); // put radio into sleep mode
 
-                // digitalWrite(LED_BUILTIN, LOW);
-                // LowPower.sleep(8000);
+                digitalWrite(LED_BUILTIN, LOW);
+                LowPower.sleep(8000);
 
                 seconds = 0;
             }
@@ -90,8 +91,8 @@ void loop()
                 SerialUSB.println("test_state::sleeping");
                 state = test_state::active; // next state
 
-                // SerialUSB.println("gps power on");
-                // digitalWrite(PIN_GPS_POWER, GPS_ON);
+                SerialUSB.println("gps power on");
+                digitalWrite(PIN_GPS_POWER, GPS_ON);
 
                 seconds = 0;
                 start = now;
