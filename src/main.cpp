@@ -1,8 +1,9 @@
 #include <Arduino.h>
-// #include "TinyGPS.h"
+#include "TinyGPS.h"
 #include <ArduinoLowPower.h>
 #include <SPI.h>
 #include <RH_RF95.h>
+#include <NVStorage.h>
 
 #define DIO0 17
 static RH_RF95 rf95(SS,DIO0);
@@ -61,6 +62,21 @@ void loop()
                 SerialUSB.println("radio init");
                 rf95.init();
 
+                uint8_t data;
+
+                data = EEPROM.read(0);
+                SerialUSB.print(data);
+
+                if(data==0xff)
+                {
+                    EEPROM.write(0, 100);
+                    EEPROM.commit();
+                }
+ 
+                // if (!EEPROM.isValid()) 
+                // {
+                //     SerialUSB.println("EEPROM is empty");
+                // }
                 seconds = 0;
             }
             break;
