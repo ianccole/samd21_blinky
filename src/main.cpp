@@ -2,7 +2,7 @@
 #include <ArduinoLowPower.h>
 #include <gps.h>
 
-GPSModule gpsModule;
+// GPSModule gpsModule;
 
 char buffer[128];
 void setup()

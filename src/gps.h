@@ -2,8 +2,9 @@
 #define GPS_L80_h
 
 #include <Arduino.h>
-#include "TinyGPS.h"
 
+#if defined(NODE_HAVE_GPS)
+#include "TinyGPS.h"
 TinyGPS gps;
 
 class GPSModule
@@ -30,7 +31,7 @@ public:
 
     bool checkGPS()
     {
-        _gpsFix = false;
+        // _gpsFix = false;
         while (Serial1.available())
         {
             char ch;
@@ -114,6 +115,11 @@ public:
         return _ttff;
     }
 
+    bool gpsFix()
+    {
+        return _gpsFix;
+    }
+
 private:
     gps_state _state;
     bool _gpsFix;
@@ -121,4 +127,69 @@ private:
     unsigned long _ttff;
 
 };
+#else
+
+class GPSModule
+{
+public:
+    enum class gps_state
+    {
+        gps_on,
+        gps_on_first_fix,
+        gps_on_fix,
+        gps_off
+    };
+
+    /// Constructor.
+    GPSModule() : _state(gps_state::gps_off), _gpsFix(false)
+    {}
+
+    void setup()
+    {
+    }
+
+    bool checkGPS()
+    {
+        return _gpsFix;
+    }
+
+    void getFixStr(char* buffer)
+    {
+    }
+
+    void powerOn()
+    {
+    }
+
+    void powerOff()
+    {
+    }
+
+    gps_state state()
+    {
+        return _state;
+    }
+
+    unsigned long ttff()
+    {
+        return _ttff;
+    }
+
+    bool gpsFix()
+    {
+        return _gpsFix;
+    }
+
+private:
+    gps_state _state;
+    bool _gpsFix;
+    unsigned long _start;
+    unsigned long _ttff;
+};
+
+#endif
+
+
+static GPSModule gpsModule;
+
 #endif
