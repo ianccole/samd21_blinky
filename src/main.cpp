@@ -5,6 +5,10 @@
 #include <RH_RF95.h>
 #include <NVStorage.h>
 
+#define SD1306_Address 0x3C                       //define I2C address for SD1306
+#include "SSD1306Ascii.h"                   //https://github.com/greiman/SSD1306Ascii
+#include "SSD1306AsciiWire.h"
+
 #define DIO0 17
 static RH_RF95 rf95(SS,DIO0);
 
@@ -14,14 +18,35 @@ void setup()
 {
     Serial1.begin(9600);
 
+    while(!SerialUSB) ;
+    SerialUSB.println("start");
     // put your setup code here, to run once:
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(PIN_GPS_POWER, OUTPUT);
+    // pinMode(PIN_GPS_POWER, OUTPUT);
     // digitalWrite(PIN_GPS_POWER, GPS_OFF);    // GPS power OFF
-    digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
+    // digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
     digitalWrite(LED_BUILTIN, HIGH); // toggle the LED on (HIGH is the voltage level)
     // delay(8000);
     // rf95.sleep(); // put radio into sleep mode
+    // pinMode(PIN_WIRE_SDA, INPUT_PULLUP);
+    // pinMode(PIN_WIRE_SCL, INPUT_PULLUP);
+
+    // SerialUSB.println(PIN_WIRE_SDA);
+    // SerialUSB.println(PIN_WIRE_SCL);
+
+    Wire.begin();
+    Wire.beginTransmission(SD1306_Address);
+    byte error = Wire.endTransmission();
+    SerialUSB.println(error);
+
+    SSD1306AsciiWire disp;
+    SerialUSB.println("disp begin");
+    disp.begin(&Adafruit128x64, SD1306_Address);
+    SerialUSB.println("disp setFont");
+    disp.setFont(Adafruit5x7);
+    SerialUSB.println("disp set1X");
+    disp.set1X();
+    disp.print("here");
 }
 
 
@@ -88,7 +113,7 @@ void loop()
                 state = test_state::sleeping; // next state
 
                 SerialUSB.println("gps power off");
-                digitalWrite(PIN_GPS_POWER, GPS_OFF);
+                // digitalWrite(PIN_GPS_POWER, GPS_OFF);
 
 
                 SerialUSB.println("radio sleep");
@@ -108,7 +133,7 @@ void loop()
                 state = test_state::active; // next state
 
                 SerialUSB.println("gps power on");
-                digitalWrite(PIN_GPS_POWER, GPS_ON);
+                // digitalWrite(PIN_GPS_POWER, GPS_ON);
 
                 seconds = 0;
                 start = now;
